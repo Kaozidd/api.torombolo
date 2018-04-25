@@ -3,6 +3,8 @@ const Quote = require('../models/Quote')
 
 const apiRouter = Router()
 
+const request = require('superagent')
+
 function getQuotes(req, res) {
   Quote
     .query()
@@ -76,6 +78,23 @@ function deleteQuote(req, res) {
       }).status(500)
     })
 }
+
+function getDegrees(req, res) {
+  const query = req.query.q
+  const queryFormatted = query.split(' ').join('+')
+
+  request
+    .get(`http://search.sep.gob.mx/solr/cedulasCore/select?fl=%2A%2Cscore&q=${queryFormatted}&start=0&rows=100&facet=true&indent=on&wt=json`)
+    .then(function(data) {
+      res.json({
+        content: data.body.response
+      }).status(200)
+    })
+    .catch((e) => res.json({ error: e }))
+}
+
+apiRouter
+  .get('/cedulas', getDegrees)
 
 apiRouter
   .get('/quotes', getQuotes)
